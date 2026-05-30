@@ -246,13 +246,10 @@ main {
   font-size: 1.1rem;
 }
 
-.cart-row {
-  display: grid;
-  grid-template-columns: 1fr 130px 120px 110px;
-  gap: 16px;
-  align-items: center;
-  border-bottom: 1px solid var(--border);
-  padding: 16px 0;
+.cart-row input[type="number"] {
+    width: 60px !important;
+    padding: 8px !important;
+    display: inline-block !important;
 }
 
 .cart-row p {
@@ -377,4 +374,22 @@ footer {
     background: #237bff;
     border-radius: 20px;
     transition: width 1s linear;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-overlay.active { display: flex; }
+.modal-card {
+    background: var(--panel);
+    padding: 30px;
+    border-radius: 20px;
+    width: 400px;
+    border: 1px solid var(--border);
 }
