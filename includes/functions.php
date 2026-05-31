@@ -15,7 +15,13 @@ function requireLogin(string $redirect = 'login.php'): void {
 }
 
 function cartCount(): int {
-    return array_sum($_SESSION['cart'] ?? []);
+    if (!isLoggedIn()) {
+        return array_sum($_SESSION['cart'] ?? []);
+    }
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT SUM(quantity) FROM cart_items WHERE user_id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    return (int)$stmt->fetchColumn();
 }
 
 function formatPrice(float $price): string {
