@@ -13,6 +13,9 @@
   <nav>
     <a href="index.php">Catalogue</a>
     <a href="favoris.php">Favoris</a>
+    <?php if (isLoggedIn()): ?>
+      <a href="mes_encheres.php">Mes enchères</a>
+    <?php endif; ?>
     <a href="panier.php">Panier <strong><?= cartCount() ?></strong></a>
   </nav>
   <div class="account-zone">
@@ -27,3 +30,5 @@
 <?php if (!empty($_SESSION['flash'])): ?>
   <div class="flash"><?= h($_SESSION['flash']); unset($_SESSION['flash']); ?></div>
 <?php endif; ?>
+<script src="assets/script.js" defer></script>
+</body>
