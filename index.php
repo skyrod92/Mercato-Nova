@@ -26,82 +26,63 @@ if (isLoggedIn()) {
 }
 include "includes/header.php";
 ?>
-<section class="hero">
-  <div>
-    <p class="badge">Marketplace moderne</p>
-    <h1>Achetez, vendez, négociez.</h1>
-    <p>Une plateforme e-commerce avec catalogue, panier séparé, favoris, connexion et vérification email.</p>
-    <div class="hero-actions">
-      <a href="#catalogue" class="btn primary">Voir les produits</a>
-      <?php if (!isLoggedIn()): ?>
-    <a href="register.php" class="btn secondary">Créer un compte</a>
-<?php endif; ?>
-    </div>
-  </div>
-  <div class="hero-card">
-    <h3>Offre du jour</h3>
-    <p>Casque Bluetooth Pro</p>
-    <strong>79,99 €</strong>
-    <form method="post" action="actions/add_cart.php">
-      <input type="hidden" name="product_id" value="2">
-      <button>Ajouter au panier</button>
-    </form>
-  </div>
-</section>
-
 <main>
-  <form class="filters" method="get">
-    <input name="search" value="<?= h($search) ?>" type="text" placeholder="Rechercher un produit...">
-    <select name="category">
-      <option value="all">Toutes les catégories</option>
-      <option value="tech" <?= $category === "tech" ? "selected" : "" ?>>Électronique</option>
-      <option value="mode" <?= $category === "mode" ? "selected" : "" ?>>Mode</option>
-      <option value="maison" <?= $category === "maison" ? "selected" : "" ?>>Maison</option>
-      <option value="livres" <?= $category === "livres" ? "selected" : "" ?>>Livres</option>
-    </select>
-    <button>Filtrer</button>
-  </form>
-
   <section id="catalogue">
     <h2>Catalogue</h2>
     <div class="product-grid">
-      <?php foreach ($products as $product): ?>
+      <?php foreach ($products as $product): 
+          $bidInfo = $pdo->prepare("SELECT MAX(amount) as max_bid, COUNT(*) as count FROM bids WHERE product_id = ?");
+          $bidInfo->execute([$product['id']]);
+          $stats = $bidInfo->fetch();
+          $basePrice = (float)$product['price'];
+          $maxBid = (float)($stats['max_bid'] ?? 0);
+          $hasBids = $stats['count'] > 0;
+          $currentDisplayPrice = $hasBids ? $maxBid : $basePrice;
+          $progress = min(100, ($currentDisplayPrice / 500) * 100);
+      ?>
         <article class="product-card">
-          <div class="product-img"><?= h($product["icon"]) ?></div>
-          <div class="product-info">
-            <span class="tag"><?= h($product["sale_mode"]) ?></span>
-            <h3><?= h($product["name"]) ?></h3>
-            <p><?= h($product["description"]) ?></p>
+          <a href="produit.php?id=<?= (int)$product["id"] ?>" style="text-decoration: none; color: inherit; display: block;">
+            <div class="product-img"><?= h($product["icon"]) ?></div>
+            <div class="product-info">
+              <h3><?= h($product["name"]) ?></h3>
+              
+              <?php if ($product["sale_mode"] === "enchere"): ?>
+                <div class="jauge-container" style="height: 10px; background: linear-gradient(to right, green, yellow, red); border-radius: 5px; position: relative; margin: 10px 0;">
+                    <div style="position: absolute; left: <?= $progress ?>%; top: -2px; width: 3px; height: 14px; background: white;"></div>
+                </div>
+                <p style="font-size: 0.8rem; color: #9ea7b1; margin-bottom: 8px;">Fin : <?= h(substr($product['end_date'] ?? 'N/A', 0, 16)) ?></p>
+              <?php endif; ?>
 
-            <?php if ($product["sale_mode"] === "enchere"): ?>
-             <div class="auction-box">
-              <div class="auction-time">
-                <span>Expire dans</span>
-                <span class="timer"
-                    data-end="<?= h($product['end_date'] ?? '') ?>"
-                </span>
+              <div class="price-row" style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 10px;">
+                <span class="price" style="font-size: 1.3rem; font-weight: bold; color: #fff;"><?= formatPrice($currentDisplayPrice) ?></span>
+                
+                <?php if ($product["sale_mode"] === "enchere"): ?>
+                    <div style="font-size: 0.8rem; color: #9ea7b1; margin-top: 2px;">
+                        <?php if ($hasBids): ?>
+                            Prix de base : <span style="text-decoration: line-through;"><?= formatPrice($basePrice) ?></span> 
+                            <span style="color: var(--primary);">(<?= $stats['count'] ?> propositions)</span>
+                        <?php else: ?>
+                            Prix de départ : <?= formatPrice($basePrice) ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
               </div>
-
-              <div class="time-bar">
-                 <div class="time-bar-fill"
-                    data-start="<?= h($product['start_date'] ?? '') ?>"
-                    data-end="<?= h($product['end_date'] ?? '') ?>"
-                 </div>
-               </div>
-              </div>
-         <?php endif; ?>
-            <div class="price-row">
-              <span class="price"><?= formatPrice((float) $product["price"]) ?></span>
-              <form method="post" action="actions/add_cart.php">
-                <input type="hidden" name="product_id" value="<?= (int) $product["id"] ?>">
-                <button>Ajouter</button>
-              </form>
             </div>
+          </a>
+
+          <div class="actions-block" style="padding: 0 15px 15px 15px;">
+            <?php if ($product["sale_mode"] !== "enchere"): ?>
+              <form method="post" action="actions/add_cart.php" style="margin-bottom: 5px;">
+                <input type="hidden" name="product_id" value="<?= (int) $product["id"] ?>">
+                <button type="submit" style="width: 100%;">Ajouter au panier</button>
+              </form>
+            <?php endif; ?>
+
             <form method="post" action="actions/toggle_favorite.php">
-              <input type="hidden" name="product_id" value="<?= (int) $product["id"] ?>">
-              <button class="favorite-btn" type="submit">
-                <?= in_array($product["id"], $favorites) ? "♥ Retirer des favoris" : "♡ Ajouter aux favoris" ?>
-              </button>
+                <input type="hidden" name="product_id" value="<?= (int) $product["id"] ?>">
+                <button class="favorite-btn" type="submit" style="width: 100%;">
+                  <?= in_array($product["id"], $favorites) ? "♥ Retirer des favoris" : "♡ Ajouter aux favoris" ?>
+                </button>
             </form>
           </div>
         </article>
