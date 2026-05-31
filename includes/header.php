@@ -15,12 +15,20 @@
     <a href="favoris.php">Favoris</a>
     <?php if (isLoggedIn()): ?>
       <a href="mes_encheres.php">Mes enchères</a>
+      <a href="mes_achats.php">Mes achats</a>
+      <a href="notifications.php">Notifications</a>
+      <?php if (in_array(currentRole(), ['vendeur', 'admin'], true)): ?>
+        <a href="dashboard_vendeur.php">Dashboard vendeur</a>
+      <?php endif; ?>
+      <?php if (currentRole() === 'admin'): ?>
+        <a href="admin.php">Admin</a>
+      <?php endif; ?>
     <?php endif; ?>
     <a href="panier.php">Panier <strong><?= cartCount() ?></strong></a>
   </nav>
   <div class="account-zone">
     <?php if (isLoggedIn()): ?>
-      <span class="hello">Bonjour <?= h($_SESSION['username']) ?></span>
+      <a class="hello" href="profil.php">Bonjour <?= h($_SESSION['username'] ?? '') ?></a>
       <a class="login-btn secondary-btn" href="logout.php">Déconnexion</a>
     <?php else: ?>
       <a class="login-btn" href="login.php">Connexion</a>
@@ -30,5 +38,3 @@
 <?php if (!empty($_SESSION['flash'])): ?>
   <div class="flash"><?= h($_SESSION['flash']); unset($_SESSION['flash']); ?></div>
 <?php endif; ?>
-<script src="assets/script.js" defer></script>
-</body>
